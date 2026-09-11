@@ -45,6 +45,9 @@ and then launches `/data/start_server_bepinex.sh` when BepInEx is present, or
 SteamCMD writes to `$HOME` (`/home/steam`) and `/opt/steamcmd`, so the container
 needs a writable root filesystem or writable volumes at those paths.
 
+The image sets `SteamAppId=892970` (Valheim's game id, distinct from the
+`896660` dedicated server app) so the server registers with Steam.
+
 ## Image
 
 - Base: `debian:13-slim`

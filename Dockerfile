@@ -19,8 +19,11 @@ RUN dpkg --add-architecture i386 \
  && chown -R 568:568 /opt/steamcmd /data \
  && ln -s /opt/steamcmd/steamcmd.sh /usr/local/bin/steamcmd
 
+# The SteamCMD app to install is 896660 (set by the entrypoint). Steam's
+# backend expects the game id instead, so the image sets that here.
 ENV HOME=/home/steam \
-    LANG=C.UTF-8
+    LANG=C.UTF-8 \
+    SteamAppId=892970
 
 USER 568
 

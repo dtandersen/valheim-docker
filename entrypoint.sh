@@ -2,6 +2,8 @@
 set -euo pipefail
 
 STEAMCMD="${STEAMCMD_BIN:-/opt/steamcmd/steamcmd.sh}"
+# The dedicated server app SteamCMD installs. This is not the id the server
+# process hands to Steam: SteamAppId is the game id (892970), set by the image.
 APP_ID="${STEAMCMD_APP_ID:-896660}"
 INSTALL_DIR="${STEAMCMD_INSTALL_DIR:-/data}"
 LOGIN="${STEAMCMD_LOGIN:-anonymous}"
@@ -18,10 +20,15 @@ SCREEN_WIDTH="${SCREEN_WIDTH:-640}"
 SCREEN_HEIGHT="${SCREEN_HEIGHT:-480}"
 ADDITIONAL_ARGS="${ADDITIONAL_ARGS:-}"
 
+# Valheim's bundled libraries live beside the server binary.
+export LD_LIBRARY_PATH="${INSTALL_DIR}/linux64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+
 if [ -z "${SERVER_PW}" ]; then
   echo "SERVER_PW is required" >&2
   exit 1
 fi
+
+echo "SteamCMD app ${APP_ID}; SteamAppId ${SteamAppId:-unset}"
 
 if [ "${STEAMCMD_UPDATE:-1}" = "1" ]; then
   "${STEAMCMD}" +quit
