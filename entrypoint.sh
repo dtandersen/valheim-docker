@@ -13,11 +13,7 @@ SERVER_PORT="${SERVER_PORT:-2456}"
 SERVER_PUBLIC="${SERVER_PUBLIC:-1}"
 SERVER_WORLD_NAME="${SERVER_WORLD_NAME:-Dedicated}"
 SERVER_PW="${SERVER_PW:-}"
-SERVER_LOG_PATH="${SERVER_LOG_PATH:-logs/outputlog_server.txt}"
 SERVER_SAVE_DIR="${SERVER_SAVE_DIR:-Worlds}"
-SCREEN_QUALITY="${SCREEN_QUALITY:-Fastest}"
-SCREEN_WIDTH="${SCREEN_WIDTH:-640}"
-SCREEN_HEIGHT="${SCREEN_HEIGHT:-480}"
 ADDITIONAL_ARGS="${ADDITIONAL_ARGS:-}"
 
 # Valheim's bundled libraries live beside the server binary.
@@ -40,15 +36,11 @@ if [ "${STEAMCMD_UPDATE:-1}" = "1" ]; then
 fi
 
 cd "${INSTALL_DIR}"
-mkdir -p "$(dirname "${SERVER_LOG_PATH}")" "${SERVER_SAVE_DIR}"
+mkdir -p "${SERVER_SAVE_DIR}"
 
 server_args=(
   -batchmode
   -nographics
-  -screen-width "${SCREEN_WIDTH}"
-  -screen-height "${SCREEN_HEIGHT}"
-  -screen-quality "${SCREEN_QUALITY}"
-  -logFile "${SERVER_LOG_PATH}"
   -name "${SERVER_NAME}"
   -port "${SERVER_PORT}"
   -world "${SERVER_WORLD_NAME}"

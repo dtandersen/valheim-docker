@@ -35,11 +35,7 @@ and then launches `/data/start_server_bepinex.sh` when BepInEx is present, or
 | `SERVER_PUBLIC` | `1` |
 | `SERVER_WORLD_NAME` | `Dedicated` |
 | `SERVER_PW` | required |
-| `SERVER_LOG_PATH` | `logs/outputlog_server.txt` |
 | `SERVER_SAVE_DIR` | `Worlds` |
-| `SCREEN_QUALITY` | `Fastest` |
-| `SCREEN_WIDTH` | `640` |
-| `SCREEN_HEIGHT` | `480` |
 | `ADDITIONAL_ARGS` | empty |
 
 SteamCMD writes to `$HOME` (`/home/steam`) and `/opt/steamcmd`, so the container
