@@ -12,19 +12,37 @@ $ docker run --rm -v valheim-data:/data -e SERVER_PW=changeme ghcr.io/dtandersen
 
 ## Entrypoint
 
-The entrypoint runs SteamCMD (self-update, then `app_update 896660 validate`)
-and then launches `/data/start_server_bepinex.sh` when BepInEx is present, or
-`/data/valheim_server.x86_64` otherwise.
+1. Updates SteamCMD itself, then installs/updates app `896660` into `/data`,
+   unless `STEAMCMD_UPDATE` is false.
+2. Appends SteamCMD's `validate`, unless `STEAMCMD_VALIDATE` is false. `validate`
+   re-reads the whole install, so disabling it makes startup much faster.
+3. Prepends `<install dir>/linux64` to `LD_LIBRARY_PATH`.
+4. Runs `/data/start_server_bepinex.sh` when BepInEx is present, otherwise
+   `/data/valheim_server.x86_64`, with:
+
+   ```text
+   -batchmode -nographics -name … -port … -world … -public … -savedir …
+   [-password …] [-saveinterval …] [-backups …] [-backupshort …] [-backuplong …]
+   [-crossplay]
+   ```
+
+   Empty values omit their flag, so exporting `SERVER_BACKUPS=` drops `-backups`
+   and letting Valheim apply its own default.
+
+The entrypoint `exec`s the server, so it stays PID 1 and receives signals
+directly. `STEAMCMD_UPDATE` and `STEAMCMD_VALIDATE` accept booleans: `1`/`true`,
+`yes`, `on` (any case) are true, anything else is false.
 
 ### SteamCMD
 
 | Env | Default |
 |---|---|
-| `STEAMCMD_BIN` | `/opt/steamcmd/steamcmd.sh` (`steamcmd` is also on `PATH`) |
-| `STEAMCMD_APP_ID` | `896660` |
-| `STEAMCMD_INSTALL_DIR` | `/data` |
-| `STEAMCMD_LOGIN` | `anonymous` |
-| `STEAMCMD_UPDATE` | `1` |
+| `STEAMCMD_UPDATE` | `true` |
+| `STEAMCMD_VALIDATE` | `true` |
+
+SteamCMD is fixed at `/opt/steamcmd/steamcmd.sh`, installs into `/data` and logs
+in anonymously. The app id (`896660`), install directory (`/data`) and save
+directory (`worlds`) are not configurable, because the image is Valheim-specific.
 
 ### Server
 
@@ -34,9 +52,21 @@ and then launches `/data/start_server_bepinex.sh` when BepInEx is present, or
 | `SERVER_PORT` | `2456` |
 | `SERVER_PUBLIC` | `1` |
 | `SERVER_WORLD_NAME` | `Dedicated` |
-| `SERVER_PW` | required |
-| `SERVER_SAVE_DIR` | `Worlds` |
+| `SERVER_PW` | empty → random 8-char generated |
+| `SERVER_SAVE_INTERVAL` | `1800` |
+| `SERVER_BACKUPS` | `4` |
+| `SERVER_BACKUP_SHORT` | `7200` |
+| `SERVER_BACKUP_LONG` | `43200` |
+| `SERVER_CROSSPLAY` | `false` |
 | `ADDITIONAL_ARGS` | empty |
+
+`SERVER_PUBLIC` is passed straight to the server's `-public` flag, so it takes
+`0` or `1`. `SERVER_PW` is empty by default; when it is empty the entrypoint
+generates a random 8-character alphanumeric password and prints it, so it shows
+up in `kubectl logs`/`docker logs`. A password you set yourself is never logged.
+Set it explicitly to pin one — Valheim
+requires at least 5 characters. `SERVER_CROSSPLAY`
+adds `-crossplay`, which routes through PlayFab so console players can join.
 
 SteamCMD writes to `$HOME` (`/home/steam`) and `/opt/steamcmd`, so the container
 needs a writable root filesystem or writable volumes at those paths.

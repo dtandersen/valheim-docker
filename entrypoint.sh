@@ -1,42 +1,60 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-STEAMCMD="${STEAMCMD_BIN:-/opt/steamcmd/steamcmd.sh}"
+is_true() {
+  case "${1,,}" in
+    1|true|yes|on) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+STEAMCMD=/opt/steamcmd/steamcmd.sh
+INSTALL_DIR=/data
+LOGIN=anonymous
+SAVE_DIR=worlds
 # The dedicated server app SteamCMD installs. This is not the id the server
 # process hands to Steam: SteamAppId is the game id (892970), set by the image.
-APP_ID="${STEAMCMD_APP_ID:-896660}"
-INSTALL_DIR="${STEAMCMD_INSTALL_DIR:-/data}"
-LOGIN="${STEAMCMD_LOGIN:-anonymous}"
+APP_ID=896660
 
 SERVER_NAME="${SERVER_NAME:-Valheim}"
 SERVER_PORT="${SERVER_PORT:-2456}"
 SERVER_PUBLIC="${SERVER_PUBLIC:-1}"
 SERVER_WORLD_NAME="${SERVER_WORLD_NAME:-Dedicated}"
 SERVER_PW="${SERVER_PW:-}"
-SERVER_SAVE_DIR="${SERVER_SAVE_DIR:-Worlds}"
+SERVER_SAVE_INTERVAL="${SERVER_SAVE_INTERVAL-1800}"
+SERVER_BACKUPS="${SERVER_BACKUPS-4}"
+SERVER_BACKUP_SHORT="${SERVER_BACKUP_SHORT-7200}"
+SERVER_BACKUP_LONG="${SERVER_BACKUP_LONG-43200}"
+SERVER_CROSSPLAY="${SERVER_CROSSPLAY:-false}"
 ADDITIONAL_ARGS="${ADDITIONAL_ARGS:-}"
+
+if [ -z "${SERVER_PW}" ]; then
+  SERVER_PW="$(set +o pipefail; LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 8)"
+  echo "SERVER_PW is empty; generated password: ${SERVER_PW}"
+fi
 
 # Valheim's bundled libraries live beside the server binary.
 export LD_LIBRARY_PATH="${INSTALL_DIR}/linux64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
 
-if [ -z "${SERVER_PW}" ]; then
-  echo "SERVER_PW is required" >&2
-  exit 1
-fi
-
 echo "SteamCMD app ${APP_ID}; SteamAppId ${SteamAppId:-unset}"
 
-if [ "${STEAMCMD_UPDATE:-1}" = "1" ]; then
+if is_true "${STEAMCMD_UPDATE:-true}"; then
   "${STEAMCMD}" +quit
+
+  update_args=()
+  if is_true "${STEAMCMD_VALIDATE:-true}"; then
+    update_args=(validate)
+  fi
+
   "${STEAMCMD}" \
     +force_install_dir "${INSTALL_DIR}" \
     +login "${LOGIN}" \
-    +app_update "${APP_ID}" validate \
+    +app_update "${APP_ID}" "${update_args[@]}" \
     +quit
 fi
 
 cd "${INSTALL_DIR}"
-mkdir -p "${SERVER_SAVE_DIR}"
+mkdir -p "${SAVE_DIR}"
 
 server_args=(
   -batchmode
@@ -44,10 +62,28 @@ server_args=(
   -name "${SERVER_NAME}"
   -port "${SERVER_PORT}"
   -world "${SERVER_WORLD_NAME}"
-  -password "${SERVER_PW}"
   -public "${SERVER_PUBLIC}"
-  -savedir "${SERVER_SAVE_DIR}"
+  -savedir "${SAVE_DIR}"
 )
+
+if [ -n "${SERVER_PW}" ]; then
+  server_args+=(-password "${SERVER_PW}")
+fi
+if [ -n "${SERVER_SAVE_INTERVAL}" ]; then
+  server_args+=(-saveinterval "${SERVER_SAVE_INTERVAL}")
+fi
+if [ -n "${SERVER_BACKUPS}" ]; then
+  server_args+=(-backups "${SERVER_BACKUPS}")
+fi
+if [ -n "${SERVER_BACKUP_SHORT}" ]; then
+  server_args+=(-backupshort "${SERVER_BACKUP_SHORT}")
+fi
+if [ -n "${SERVER_BACKUP_LONG}" ]; then
+  server_args+=(-backuplong "${SERVER_BACKUP_LONG}")
+fi
+if is_true "${SERVER_CROSSPLAY:-false}"; then
+  server_args+=(-crossplay)
+fi
 
 extra_args=()
 if [ -n "${ADDITIONAL_ARGS}" ]; then
