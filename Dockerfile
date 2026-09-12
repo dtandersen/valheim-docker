@@ -1,4 +1,4 @@
-FROM debian:13-slim
+FROM debian:13-slim@sha256:d7e12182ce18b85b93007c1dedf31f2d29e01ccf3182cc4017c709b6259bc132
 
 RUN dpkg --add-architecture i386 \
  && apt-get update \
@@ -27,8 +27,14 @@ ENV HOME=/home/steam \
 
 USER 568
 
-RUN curl -fsSL https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz \
-      | tar -xz -C /opt/steamcmd \
+# Valve's bootstrap installer has not changed since 2018; it self-updates into
+# /opt/steamcmd on first run, so the hash stays valid.
+ARG STEAMCMD_SHA256=cebf0046bfd08cf45da6bc094ae47aa39ebf4155e5ede41373b579b8f1071e7c
+RUN curl -fsSL -o /tmp/steamcmd.tar.gz \
+      https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz \
+ && echo "${STEAMCMD_SHA256}  /tmp/steamcmd.tar.gz" | sha256sum -c - \
+ && tar -xzf /tmp/steamcmd.tar.gz -C /opt/steamcmd \
+ && rm /tmp/steamcmd.tar.gz \
  && /opt/steamcmd/steamcmd.sh +quit
 
 COPY entrypoint.sh /usr/local/bin/valheim-entrypoint

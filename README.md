@@ -52,7 +52,7 @@ directory (`worlds`) are not configurable, because the image is Valheim-specific
 | `SERVER_PORT` | `2456` |
 | `SERVER_PUBLIC` | `1` |
 | `SERVER_WORLD_NAME` | `Dedicated` |
-| `SERVER_PW` | empty → random 8-char generated |
+| `SERVER_PW` | empty → `-password` omitted |
 | `SERVER_SAVE_INTERVAL` | `1800` |
 | `SERVER_BACKUPS` | `4` |
 | `SERVER_BACKUP_SHORT` | `7200` |
@@ -61,12 +61,10 @@ directory (`worlds`) are not configurable, because the image is Valheim-specific
 | `ADDITIONAL_ARGS` | empty |
 
 `SERVER_PUBLIC` is passed straight to the server's `-public` flag, so it takes
-`0` or `1`. `SERVER_PW` is empty by default; when it is empty the entrypoint
-generates a random 8-character alphanumeric password and prints it, so it shows
-up in `kubectl logs`/`docker logs`. A password you set yourself is never logged.
-Set it explicitly to pin one — Valheim
-requires at least 5 characters. `SERVER_CROSSPLAY`
-adds `-crossplay`, which routes through PlayFab so console players can join.
+`0` or `1`. `SERVER_PW` is the server password — Valheim requires at least 5
+characters — and when it is empty `-password` is omitted, in which case the
+server may refuse to start. `SERVER_CROSSPLAY` adds `-crossplay`, which routes
+through PlayFab so console players can join.
 
 SteamCMD writes to `$HOME` (`/home/steam`) and `/opt/steamcmd`, so the container
 needs a writable root filesystem or writable volumes at those paths.
@@ -76,10 +74,11 @@ The image sets `SteamAppId=892970` (Valheim's game id, distinct from the
 
 ## Image
 
-- Base: `debian:13-slim`
+- Base: `debian:13-slim`, pinned by digest
 - Runtime libraries: `libatomic1`, `libpulse0`, `libstdc++6`, `libgcc-s1`
-- SteamCMD: official `steamcmd_linux.tar.gz` into `/opt/steamcmd`
+- SteamCMD: pinned `steamcmd_linux.tar.gz` (SHA256-verified) into `/opt/steamcmd`
 - SteamCMD deps: `lib32gcc-s1`, `lib32stdc++6` (i386)
+- Platform: `linux/amd64` only, since SteamCMD is x86
 
 Images are built on every push to `main`, on tags, and on demand. Tags produced:
 `latest` (default branch), the git tag, and the short SHA.

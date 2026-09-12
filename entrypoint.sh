@@ -28,11 +28,6 @@ SERVER_BACKUP_LONG="${SERVER_BACKUP_LONG-43200}"
 SERVER_CROSSPLAY="${SERVER_CROSSPLAY:-false}"
 ADDITIONAL_ARGS="${ADDITIONAL_ARGS:-}"
 
-if [ -z "${SERVER_PW}" ]; then
-  SERVER_PW="$(set +o pipefail; LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 8)"
-  echo "SERVER_PW is empty; generated password: ${SERVER_PW}"
-fi
-
 # Valheim's bundled libraries live beside the server binary.
 export LD_LIBRARY_PATH="${INSTALL_DIR}/linux64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
 
