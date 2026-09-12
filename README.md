@@ -58,6 +58,7 @@ directory (`worlds`) are not configurable, because the image is Valheim-specific
 | `SERVER_BACKUP_SHORT` | `7200` |
 | `SERVER_BACKUP_LONG` | `43200` |
 | `SERVER_CROSSPLAY` | `false` |
+| `SERVER_ADMINS` | empty |
 | `ADDITIONAL_ARGS` | empty |
 
 `SERVER_PUBLIC` is passed straight to the server's `-public` flag, so it takes
@@ -65,6 +66,11 @@ directory (`worlds`) are not configurable, because the image is Valheim-specific
 characters — and when it is empty `-password` is omitted, in which case the
 server may refuse to start. `SERVER_CROSSPLAY` adds `-crossplay`, which routes
 through PlayFab so console players can join.
+
+`SERVER_ADMINS` is a space-separated list of SteamID64s. On start each id is
+appended to `<saveDir>/adminlist.txt` if it is not already there, so it is
+idempotent and survives the file being recreated with a new world. Non-numeric
+entries are skipped with a warning.
 
 SteamCMD writes to `$HOME` (`/home/steam`) and `/opt/steamcmd`, so the container
 needs a writable root filesystem or writable volumes at those paths.

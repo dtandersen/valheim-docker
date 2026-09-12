@@ -26,6 +26,7 @@ SERVER_BACKUPS="${SERVER_BACKUPS-4}"
 SERVER_BACKUP_SHORT="${SERVER_BACKUP_SHORT-7200}"
 SERVER_BACKUP_LONG="${SERVER_BACKUP_LONG-43200}"
 SERVER_CROSSPLAY="${SERVER_CROSSPLAY:-false}"
+SERVER_ADMINS="${SERVER_ADMINS:-}"
 ADDITIONAL_ARGS="${ADDITIONAL_ARGS:-}"
 
 # Valheim's bundled libraries live beside the server binary.
@@ -50,6 +51,21 @@ fi
 
 cd "${INSTALL_DIR}"
 mkdir -p "${SAVE_DIR}"
+
+# Ensure each configured admin is listed once, keeping whatever is already
+# there (including the file's own comment header).
+if [ -n "${SERVER_ADMINS}" ]; then
+  for id in ${SERVER_ADMINS}; do
+    case "${id}" in
+      *[!0-9]*|"")
+        echo "Ignoring non-numeric admin id: ${id}" >&2
+        continue
+        ;;
+    esac
+    grep -qxF "${id}" "${SAVE_DIR}/adminlist.txt" 2>/dev/null \
+      || echo "${id}" >> "${SAVE_DIR}/adminlist.txt"
+  done
+fi
 
 server_args=(
   -batchmode
