@@ -12,12 +12,14 @@ $ docker run --rm -v valheim-data:/data -e SERVER_PW=changeme ghcr.io/dtandersen
 
 ## Entrypoint
 
-1. Updates SteamCMD itself, then installs/updates app `896660` into `/data`,
+1. Removes `/data/steamapps` to rebuild Steam's app metadata and install state.
+   Valheim saves remain under `/data/worlds`.
+2. Updates SteamCMD itself, then installs/updates app `896660` into `/data`,
    unless `STEAMCMD_UPDATE` is false.
-2. Appends SteamCMD's `validate`, unless `STEAMCMD_VALIDATE` is false. `validate`
+3. Appends SteamCMD's `validate`, unless `STEAMCMD_VALIDATE` is false. `validate`
    re-reads the whole install, so disabling it makes startup much faster.
-3. Prepends `<install dir>/linux64` to `LD_LIBRARY_PATH`.
-4. Runs `/data/start_server_bepinex.sh` when BepInEx is present, otherwise
+4. Prepends `<install dir>/linux64` to `LD_LIBRARY_PATH`.
+5. Runs `/data/start_server_bepinex.sh` when BepInEx is present, otherwise
    `/data/valheim_server.x86_64`, with:
 
    ```text
