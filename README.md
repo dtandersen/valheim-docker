@@ -14,7 +14,15 @@ $ docker run --rm -v valheim-data:/data -e SERVER_PW=changeme ghcr.io/dtandersen
 
 1. Updates SteamCMD itself, refreshes Steam app metadata with
    `app_info_update 1`, then installs/updates app `896660` into `/data`, unless
-   `STEAMCMD_UPDATE` is false.
+   `STEAMCMD_UPDATE` is false. If `STEAMCMD_RESET_APP` is true, it first removes
+   only that app's manifest (`steamapps/appmanifest_896660.acf`) plus its
+   `downloading`/`temp` state to recover from stale/corrupt metadata.
+   On update failure it prints matching `content_log.txt` entries when available.
+   SteamCMD can exit 0 while still printing
+   `Error! App '896660' state is 0x6/0x602 after update job`, so the script
+   treats that output as failure too and exits instead of starting a stale server.
+   `0x6` (no connection to content servers / stuck manifest) is the known case
+   where deleting the app manifest and retrying recovers.
 2. Appends SteamCMD's `validate`, unless `STEAMCMD_VALIDATE` is false. `validate`
    re-reads the whole install, so disabling it makes startup much faster.
 3. Prepends `<install dir>/linux64` to `LD_LIBRARY_PATH`.
@@ -40,6 +48,7 @@ directly. `STEAMCMD_UPDATE` and `STEAMCMD_VALIDATE` accept booleans: `1`/`true`,
 |---|---|
 | `STEAMCMD_UPDATE` | `true` |
 | `STEAMCMD_VALIDATE` | `true` |
+| `STEAMCMD_RESET_APP` | `false` |
 
 SteamCMD is fixed at `/opt/steamcmd/steamcmd.sh`, installs into `/data` and logs
 in anonymously. The app id (`896660`), install directory (`/data`) and save
