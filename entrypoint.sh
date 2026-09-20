@@ -34,11 +34,6 @@ export LD_LIBRARY_PATH="${INSTALL_DIR}/linux64${LD_LIBRARY_PATH:+:${LD_LIBRARY_P
 
 echo "SteamCMD app ${APP_ID}; SteamAppId ${SteamAppId:-unset}"
 
-# Rebuild Steam's app metadata/install state on every start. Valheim saves are
-# kept separately in /data/worlds, so removing steamapps does not remove them.
-echo "Removing ${INSTALL_DIR}/steamapps"
-rm -rf -- "${INSTALL_DIR}/steamapps"
-
 if is_true "${STEAMCMD_UPDATE:-true}"; then
   "${STEAMCMD}" +quit
 
@@ -50,6 +45,7 @@ if is_true "${STEAMCMD_UPDATE:-true}"; then
   "${STEAMCMD}" \
     +force_install_dir "${INSTALL_DIR}" \
     +login "${LOGIN}" \
+    +app_info_update 1 \
     +app_update "${APP_ID}" "${update_args[@]}" \
     +quit
 fi
